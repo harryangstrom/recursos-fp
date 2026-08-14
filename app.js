@@ -430,12 +430,11 @@ function parseMarkdown(text, lang) {
     const line = rawLine.replace(/\r/g, '').trim();
     if (!line) continue;
 
-    const lower = line.toLowerCase();
-
-    if (lower.includes('taxonomía') || lower.includes('taxonomy')) {
+    // Section Headers (must start with ## to avoid matching title line 1)
+    if (lower.startsWith('##') && (lower.includes('taxonomía') || lower.includes('taxonomy'))) {
       mode = 'tax';
       continue;
-    } else if (lower.includes('directorio') || lower.includes('directory')) {
+    } else if (lower.startsWith('##') && (lower.includes('tabla') || lower.includes('table') || lower.includes('directorio') || lower.includes('directory'))) {
       mode = 'res';
       continue;
     }
