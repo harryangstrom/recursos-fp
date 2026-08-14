@@ -195,7 +195,11 @@ async function loadData(lang) {
 
   // Fallback to embedded data if fetch failed or returned invalid HTML/non-markdown
   if (!text || !text.includes('|')) {
-    text = lang === 'ES' ? window.EMBEDDED_DATA_ES : window.EMBEDDED_DATA_EN;
+    if (lang === 'ES' && window.EMBEDDED_DATA_ES) {
+      text = window.EMBEDDED_DATA_ES;
+    } else if (lang === 'EN' && window.EMBEDDED_DATA_EN) {
+      text = window.EMBEDDED_DATA_EN;
+    }
   }
 
   if (text) {
@@ -214,6 +218,10 @@ function getTotalSlides() {
 
 // In-Browser Markdown Parser
 function parseMarkdown(text, lang) {
+  if (!text || typeof text !== 'string') {
+    text = lang === 'ES' ? (window.EMBEDDED_DATA_ES || '') : (window.EMBEDDED_DATA_EN || '');
+  }
+
   const taxonomy = [];
   const resources = [];
   const lines = text.split('\n');
@@ -228,30 +236,43 @@ function parseMarkdown(text, lang) {
     if (lower.includes('taxonomía') || lower.includes('taxonomy')) {
       mode = 'tax';
       continue;
-    } else if (lower.includes('directorio de recursos') || lower.includes('resource directory')) {
+    } else if (lower.includes('directorio') || lower.includes('directory')) {
       mode = 'res';
       continue;
     }
 
     if (mode === 'tax') {
-      if (line.startsWith('|') && !line.includes('---') && !line.includes('Código de Categoría') && !line.includes('Category Code')) {
-        const parts = line.split('|').map(p => p.trim()).filter(Boolean);
-        if (parts.length === 3) {
-          taxonomy.push({ code: parts[0], name: parts[1], description: parts[2] });
+      if (line.startsWith('|') && !line.includes('---')) {
+        const rawParts = line.split('|').map(p => p.trim());
+        if (rawParts.length >= 4) {
+          const code = rawParts[1];
+          const name = rawParts[2];
+          const desc = rawParts[3];
+          if (code && name && !code.includes('Código') && !code.includes('Code') && !code.includes('Category')) {
+            taxonomy.push({ code, name, description: desc || '' });
+          }
         }
       }
     } else if (mode === 'res') {
-      if (line.startsWith('|') && !line.includes('---') && !line.includes('Área de Aplicación') && !line.includes('Area of Application')) {
-        const parts = line.split('|').map(p => p.trim()).filter(Boolean);
-        if (parts.length === 6) {
-          resources.push({
-            category: parts[0],
-            name: parts[1],
-            description: parts[2],
-            example: parts[3],
-            difficulty: parts[4],
-            url: parts[5]
-          });
+      if (line.startsWith('|') && !line.includes('---')) {
+        const rawParts = line.split('|').map(p => p.trim());
+        if (rawParts.length >= 7) {
+          const category = rawParts[1];
+          const name = rawParts[2];
+          const description = rawParts[3];
+          const example = rawParts[4];
+          const difficulty = rawParts[5];
+          const url = rawParts[6];
+          if (category && name && !category.includes('Área') && !category.includes('Area')) {
+            resources.push({
+              category,
+              name,
+              description: description || '',
+              example: example || '',
+              difficulty: difficulty || 'Fácil',
+              url: url || '#'
+            });
+          }
         }
       }
     }
