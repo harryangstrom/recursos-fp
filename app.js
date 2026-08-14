@@ -166,7 +166,7 @@ function initEventListeners() {
 
 // Fetch & Parse Markdown Data
 async function loadData(lang) {
-  const filename = lang === 'ES' ? '../resources_directory_es.md' : '../resources_directory_en.md';
+  const filename = lang === 'ES' ? './resources_directory_es.md' : './resources_directory_en.md';
   try {
     const res = await fetch(filename);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
