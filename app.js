@@ -170,7 +170,8 @@ async function loadData(lang) {
   const candidatePaths = [
     baseName,
     './' + baseName,
-    '../' + baseName
+    '../' + baseName,
+    '/' + baseName
   ];
 
   let text = null;
@@ -182,7 +183,7 @@ async function loadData(lang) {
       if (res.ok) {
         const fetchedText = await res.text();
         // Verify response is actual Markdown content, not an HTML 404 page
-        if (fetchedText && !fetchedText.trim().startsWith('<!DOCTYPE') && !fetchedText.trim().startsWith('<html')) {
+        if (fetchedText && !fetchedText.trim().startsWith('<!DOCTYPE') && !fetchedText.trim().startsWith('<html') && fetchedText.includes('|')) {
           text = fetchedText;
           break;
         }
@@ -192,8 +193,8 @@ async function loadData(lang) {
     }
   }
 
-  // Offline / file:// protocol fallback using embedded data
-  if (!text) {
+  // Fallback to embedded data if fetch failed or returned invalid HTML/non-markdown
+  if (!text || !text.includes('|')) {
     text = lang === 'ES' ? window.EMBEDDED_DATA_ES : window.EMBEDDED_DATA_EN;
   }
 
@@ -218,14 +219,16 @@ function parseMarkdown(text, lang) {
   const lines = text.split('\n');
   let mode = null;
 
-  for (let line of lines) {
-    line = line.strip ? line.strip() : line.trim();
+  for (let rawLine of lines) {
+    const line = rawLine.replace(/\r/g, '').trim();
     if (!line) continue;
 
-    if (line.includes('Taxonomía de Áreas de Aplicación') || line.includes('Area of Application Taxonomy')) {
+    const lower = line.toLowerCase();
+
+    if (lower.includes('taxonomía') || lower.includes('taxonomy')) {
       mode = 'tax';
       continue;
-    } else if (line.includes('Tabla del Directorio de Recursos') || line.includes('Resource Directory Table')) {
+    } else if (lower.includes('directorio de recursos') || lower.includes('resource directory')) {
       mode = 'res';
       continue;
     }
