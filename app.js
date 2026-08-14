@@ -164,19 +164,45 @@ function initEventListeners() {
   });
 }
 
-// Fetch & Parse Markdown Data
+// Fetch & Parse Markdown Data with Resilient Fallback Paths and Offline file:// Fallback
 async function loadData(lang) {
-  const filename = lang === 'ES' ? './resources_directory_es.md' : './resources_directory_en.md';
-  try {
-    const res = await fetch(filename);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const text = await res.text();
-    
+  const baseName = lang === 'ES' ? 'resources_directory_es.md' : 'resources_directory_en.md';
+  const candidatePaths = [
+    baseName,
+    './' + baseName,
+    '../' + baseName
+  ];
+
+  let text = null;
+
+  // Try dynamic server fetch first (for HTTP/HTTPS web servers)
+  for (const path of candidatePaths) {
+    try {
+      const res = await fetch(path);
+      if (res.ok) {
+        const fetchedText = await res.text();
+        // Verify response is actual Markdown content, not an HTML 404 page
+        if (fetchedText && !fetchedText.trim().startsWith('<!DOCTYPE') && !fetchedText.trim().startsWith('<html')) {
+          text = fetchedText;
+          break;
+        }
+      }
+    } catch (err) {
+      // CORS block on file:// or network error
+    }
+  }
+
+  // Offline / file:// protocol fallback using embedded data
+  if (!text) {
+    text = lang === 'ES' ? window.EMBEDDED_DATA_ES : window.EMBEDDED_DATA_EN;
+  }
+
+  if (text) {
     parseMarkdown(text, lang);
     updateStaticUIText();
     renderUI();
-  } catch (err) {
-    console.error('Failed to load markdown data:', err);
+  } else {
+    console.error(`Failed to load markdown data for ${lang}.`);
   }
 }
 
