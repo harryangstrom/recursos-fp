@@ -396,13 +396,9 @@ async function loadData(lang) {
     }
   }
 
-  // Fallback to embedded data if fetch failed or returned invalid HTML/non-markdown
+  // Self-contained fallback built directly inside app.js
   if (!text || !text.includes('|')) {
-    if (lang === 'ES' && window.EMBEDDED_DATA_ES) {
-      text = window.EMBEDDED_DATA_ES;
-    } else if (lang === 'EN' && window.EMBEDDED_DATA_EN) {
-      text = window.EMBEDDED_DATA_EN;
-    }
+    text = lang === 'ES' ? DEFAULT_MARKDOWN_ES : DEFAULT_MARKDOWN_EN;
   }
 
   if (text) {
@@ -421,8 +417,8 @@ function getTotalSlides() {
 
 // In-Browser Markdown Parser
 function parseMarkdown(text, lang) {
-  if (!text || typeof text !== 'string') {
-    text = lang === 'ES' ? (window.EMBEDDED_DATA_ES || '') : (window.EMBEDDED_DATA_EN || '');
+  if (!text || typeof text !== 'string' || !text.includes('|')) {
+    text = lang === 'ES' ? DEFAULT_MARKDOWN_ES : DEFAULT_MARKDOWN_EN;
   }
 
   const taxonomy = [];
