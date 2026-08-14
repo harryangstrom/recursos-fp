@@ -265,8 +265,9 @@ h1, h2, h3, h4, h5, h6 {
   justify-content: center;
   text-align: center;
   max-width: 950px;
-  margin: auto;
-  padding: 20px 0;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 0;
 }
 
 .hero-tag {
